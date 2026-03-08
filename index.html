@@ -153,7 +153,7 @@
 
     <script>
         // API Configuration
-        const apiKey = ""; // System will provide this automatically
+        const apiKey = "";
 
         // DOM Elements
         const dropZone = document.getElementById('drop-zone');
@@ -255,7 +255,6 @@
                     }
                     return await response.json();
                 } catch (error) {
-                    console.error(`Attempt ${i + 1} failed:`, error);
                     if (i === maxRetries - 1) throw error;
                     await new Promise(resolve => setTimeout(resolve, delays[i]));
                 }
@@ -272,21 +271,18 @@
             loadingState.classList.remove('hidden');
             generateBtn.disabled = true;
 
-            const promptText = `
-                Tindak lanjuti gambar ini sebagai seorang Kurator Microstock Profesional. 
-                Berikan respon dalam format JSON murni dengan struktur berikut:
-                {
-                    "title": "Judul deskriptif dan SEO-friendly dalam Bahasa INGGRIS (maksimal 15 kata).",
-                    "keywords": "Tepat 49 kata kunci relevan dalam Bahasa INGGRIS, dipisahkan hanya dengan koma. Urutkan dari yang paling spesifik ke yang paling umum.",
-                    "critique": "Evaluasi dan Kritik Solutif dalam Bahasa INDONESIA. Jadilah pengkritik yang tajam (jangan jadi yes-man). Analisis anatomi, pencahayaan, logika perspektif, dan terutama temukan cacat hasil generasi AI (AI artifacts) sekecil apapun. Jika ada cacat, sebutkan di mana letaknya, dan berikan solusi teknis bagaimana memperbaikinya (misalnya di Photoshop/cropping) sebelum dijual ke microstock."
-                }
-            `;
+            const systemPrompt = `Tindak lanjuti gambar ini sebagai seorang Kurator Microstock Profesional. Berikan respon dalam format JSON murni. Jadilah pengkritik yang tajam (jangan jadi yes-man). Analisis anatomi, pencahayaan, logika perspektif, dan terutama temukan cacat hasil generasi AI (AI artifacts) sekecil apapun. Jika ada cacat, sebutkan di mana letaknya, dan berikan solusi teknis bagaimana memperbaikinya (misalnya di Photoshop/cropping) sebelum dijual ke microstock.`;
+
+            const userQuery = `Berikan:\n1. Judul deskriptif dan SEO-friendly dalam Bahasa INGGRIS (maksimal 15 kata).\n2. Tepat 49 kata kunci relevan dalam Bahasa INGGRIS, dipisahkan hanya dengan koma. Urutkan dari yang paling spesifik ke yang paling umum.\n3. Evaluasi dan Kritik Solutif dalam Bahasa INDONESIA mengenai gambar ini.`;
 
             const payload = {
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
                 contents: [{
                     role: "user",
                     parts: [
-                        { text: promptText },
+                        { text: userQuery },
                         { inlineData: { mimeType: mimeType, data: base64Data } }
                     ]
                 }],
@@ -336,7 +332,7 @@
                 
             } catch (error) {
                 console.error("API Error:", error);
-                showError("Gagal menghubungi AI atau memproses gambar. Detail: " + error.message);
+                showError("Gagal menghubungi AI. Jika error 401 berlanjut, sistem mungkin gagal menyuntikkan API key secara otomatis. Coba muat ulang halaman. Detail: " + error.message);
                 loadingState.classList.add('hidden');
                 welcomeState.classList.remove('hidden');
             } finally {
